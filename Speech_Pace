@@ -7,7 +7,6 @@ from matplotlib.widgets import Slider
 import time
 
 def process_video_for_speech_pace(video_file, audio_file, pace_meter_png, threshold_low=120, threshold_high=180, show_plot=True):
-    start_time = time.time()
 
     def extract_audio(video_path, output_audio_path):
         video = mp.VideoFileClip(video_path)
@@ -78,9 +77,6 @@ def process_video_for_speech_pace(video_file, audio_file, pace_meter_png, thresh
 
     print(f"Estimated speech pace: {pace:.2f} words per minute")
     print(result)
-
-    total_time = time.time() - start_time
-    print(f"Total execution time: {total_time:.2f} seconds")
 
 video_file = r"C:\\Users\\vigne\\Downloads\\small talk.mp4"
 audio_file = r"C:\\Users\\vigne\\Downloads\\output_audio.wav"
