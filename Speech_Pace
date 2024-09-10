@@ -86,5 +86,5 @@ video_file = r"C:\\Users\\vigne\\Downloads\\small talk.mp4"
 audio_file = r"C:\\Users\\vigne\\Downloads\\output_audio.wav"
 pace_meter_png = r"C:\\Users\\vigne\\Downloads\\pace_meter.png"
 
-process_video_for_speech_pace(video_file, audio_file, pace_meter_png, show_plot=True)
+process_video_for_speech_pace(video_file, audio_file, pace_meter_png, show_plot=False)
 
