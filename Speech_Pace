@@ -1,0 +1,87 @@
+import moviepy.editor as mp
+import parselmouth
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from matplotlib.widgets import Slider
+import time
+
+def process_video_for_speech_pace(video_file, audio_file, pace_meter_png, threshold_low=120, threshold_high=180, show_plot=True):
+    start_time = time.time()
+
+    def extract_audio(video_path, output_audio_path):
+        video = mp.VideoFileClip(video_path)
+        audio = video.audio
+        audio.write_audiofile(output_audio_path, codec='pcm_s16le')
+
+    def calculate_speech_pace(audio_path):
+        sound = parselmouth.Sound(audio_path)
+        intensity = sound.to_intensity()
+        threshold = np.mean(intensity.values) * 0.5
+        speech_regions = intensity.values > threshold
+        speech_duration = np.sum(speech_regions) * intensity.dx
+        average_speaking_rate = 150
+        speech_pace = (average_speaking_rate / 60) * speech_duration
+        return speech_pace
+
+    def plot_interactive_pace_meter(pace, threshold_low=120, threshold_high=180, output_html_path="pace_meter.png"):
+        sns.set(style="whitegrid")
+
+        fig, ax = plt.subplots(figsize=(8, 4))
+        plt.subplots_adjust(left=0.1, right=0.9, bottom=0.25, top=0.75)
+
+        ax.bar('Speech Pace', pace, color='skyblue', label='Speech Pace')
+
+        ax.axhline(y=threshold_low, color='green', linestyle='--', label='Low Threshold')
+        ax.axhline(y=threshold_high, color='red', linestyle='--', label='High Threshold')
+
+        ax.set_ylabel('Words per Minute')
+        ax.set_title('Interactive Speech Pace Meter')
+        ax.legend()
+
+        axcolor = 'lightgoldenrodyellow'
+        ax_threshold_low = plt.axes([0.1, 0.1, 0.65, 0.03], facecolor=axcolor)
+        ax_threshold_high = plt.axes([0.1, 0.05, 0.65, 0.03], facecolor=axcolor)
+
+        s_threshold_low = Slider(ax_threshold_low, 'Low Threshold', 0, 200, valinit=threshold_low)
+        s_threshold_high = Slider(ax_threshold_high, 'High Threshold', 0, 200, valinit=threshold_high)
+
+        def update(val):
+            low_val = s_threshold_low.val
+            high_val = s_threshold_high.val
+            ax.lines[1].set_ydata([low_val, low_val])
+            ax.lines[2].set_ydata([high_val, high_val])
+            fig.canvas.draw_idle()
+
+        s_threshold_low.on_changed(update)
+        s_threshold_high.on_changed(update)
+
+        plt.savefig(output_html_path)
+
+        if show_plot:
+            plt.show()
+        else:
+            plt.close()
+
+    def evaluate_pace(pace, threshold_low=120, threshold_high=180):
+        if pace < threshold_low:
+            return "Reject: Speech pace is too slow."
+        elif pace > threshold_high:
+            return "Reject: Speech pace is too fast."
+        else:
+            return "Accept: Speech pace is within the acceptable range."
+
+    extract_audio(video_file, audio_file)
+    pace = calculate_speech_pace(audio_file)
+    plot_interactive_pace_meter(pace, threshold_low=threshold_low, threshold_high=threshold_high, output_html_path=pace_meter_png)
+    result = evaluate_pace(pace, threshold_low, threshold_high)
+
+    print(f"Estimated speech pace: {pace:.2f} words per minute")
+    print(result)
+
+    total_time = time.time() - start_time
+    print(f"Total execution time: {total_time:.2f} seconds")
+
+video_file = r"C:\\Users\\vigne\\Downloads\\small talk.mp4"
+audio_file = r"C:\\Users\\vigne\\Downloads\\output_audio.wav"
+pace_meter_png = r"C:\\Users\\vigne\\Downloads\\pace_meter.png"
